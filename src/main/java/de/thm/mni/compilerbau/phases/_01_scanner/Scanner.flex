@@ -36,6 +36,20 @@ import java_cup.runtime.*;
 // TODO (assignment 1): The regular expressions for all tokens need to be defined here.
 
 
+else {return symbol(Sym.ELSE);}
+while {return symbol(Sym.WHILE);}
+ref {return symbol(Sym.Ref);}
+if {return symbol(Sym.IF);}
+of {return symbol(Sym.OF);}
+type {return symbol(Sym.TYPE);}
+proc {return symbol(Sym.PROC);}
+array {return symbol(Sym.ARRAY);}
+var {return symbol(Sym.VAR);}
+< {return symbol(Sym.LT);}
+!= {return symbol(Sym.NE);}
+\:\= {return symbol(Sym. ASGN);}
+\+ {return symbol(Sym.PLUS);}
+\/ {return symbol(Sym.SLASH);}
 
 \( { return symbol(Sym.LPAREN); }
 
