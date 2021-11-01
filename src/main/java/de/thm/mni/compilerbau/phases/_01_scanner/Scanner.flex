@@ -50,7 +50,20 @@ var {return symbol(Sym.VAR);}
 \:\= {return symbol(Sym. ASGN);}
 \+ {return symbol(Sym.PLUS);}
 \/ {return symbol(Sym.SLASH);}
-
+\* {return symbol(Sym.STAR);}
+\> {return symbol(Sym.GT);}
+\<\= {return symbol(Sym.LE);}
+\- {return symbol(Sym.MINUS);}
+\>\= {return symbol(Sym.GE);}
+\= {return symbol(Sym.EQ);}
 \( { return symbol(Sym.LPAREN); }
+\) { return symbol(Sym.RPAREN); }
+\[ { return symbol(Sym.LBRACK); }
+\] { return symbol(Sym.RBRACK); }
+\{ { return symbol(Sym.LCURL); }
+\} { return symbol(Sym.RCURL); }
+\: { return symbol(Sym.COLON); }
+\; { return symbol(Sym.SEMIC); }
+
 
 [^]		{throw SplError.IllegalCharacter(new Position(yyline + 1, yycolumn + 1), yytext().charAt(0));}
