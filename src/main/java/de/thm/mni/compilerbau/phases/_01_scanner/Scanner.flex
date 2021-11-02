@@ -37,14 +37,13 @@ import java_cup.runtime.*;
 
 
 else {return symbol(Sym.ELSE);}
-while {return symbol(Sym.WHILE);}
-ref {return symbol(Sym.REF);}
 if {return symbol(Sym.IF);}
 of {return symbol(Sym.OF);}
 type {return symbol(Sym.TYPE);}
 proc {return symbol(Sym.PROC);}
 array {return symbol(Sym.ARRAY);}
 var {return symbol(Sym.VAR);}
+main {return symbol(Sym.IDENT);}
 \< {return symbol(Sym.LT);}
 \!= {return symbol(Sym.NE);}
 \:\= {return symbol(Sym. ASGN);}
@@ -64,6 +63,11 @@ var {return symbol(Sym.VAR);}
 \} { return symbol(Sym.RCURL); }
 \: { return symbol(Sym.COLON); }
 \; { return symbol(Sym.SEMIC); }
+
+[ \r\t\n] {
+
+}
+[^//] { }
 
 
 [^]		{throw SplError.IllegalCharacter(new Position(yyline + 1, yycolumn + 1), yytext().charAt(0));}
