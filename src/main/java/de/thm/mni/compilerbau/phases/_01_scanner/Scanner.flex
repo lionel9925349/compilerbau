@@ -67,5 +67,5 @@ var {return symbol(Sym.VAR);}
 \/\/.* { }
 [a-zA-Z_][a-zA-Z0-9_]* { return symbol(Sym.IDENT, new Identifer (yytext())) ;}
 [0-9]+ { return symbol(Sym.INTLIT, Integer.parseInt(yytext())) ;}
-^Ox[a-fA-F]
+
 
