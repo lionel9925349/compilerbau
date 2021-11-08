@@ -43,10 +43,10 @@ type {return symbol(Sym.TYPE);}
 proc {return symbol(Sym.PROC);}
 array {return symbol(Sym.ARRAY);}
 var {return symbol(Sym.VAR);}
-main {return symbol(Sym.IDENT);}
+
 \< {return symbol(Sym.LT);}
-\!= {return symbol(Sym.NE);}
-\:\= {return symbol(Sym. ASGN);}
+\# {return symbol(Sym.NE);}
+\:\= {return symbol(Sym.ASGN);}
 \+ {return symbol(Sym.PLUS);}
 \/ {return symbol(Sym.SLASH);}
 \* {return symbol(Sym.STAR);}
@@ -63,11 +63,9 @@ main {return symbol(Sym.IDENT);}
 \} { return symbol(Sym.RCURL); }
 \: { return symbol(Sym.COLON); }
 \; { return symbol(Sym.SEMIC); }
+[ \r\t\n] {}
+\/\/.* { }
+[a-zA-Z_][a-zA-Z0-9_]* { return symbol(Sym.IDENT, new Identifer (yytext())) ;}
+[0-9]+ { return symbol(Sym.INTLIT, Integer.parseInt(yytext())) ;}
+^Ox[a-fA-F]
 
-[ \r\t\n] {
-
-}
-[^//] { }
-
-
-[^]		{throw SplError.IllegalCharacter(new Position(yyline + 1, yycolumn + 1), yytext().charAt(0));}
