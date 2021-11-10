@@ -1,5 +1,5 @@
 proc main() {
-var := x;
+var  a := 2;
 //moi
 1234
 0x1a2f3F4e
