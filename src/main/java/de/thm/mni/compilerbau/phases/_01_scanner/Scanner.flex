@@ -33,7 +33,6 @@ import java_cup.runtime.*;
 
 %%
 
-// TODO (assignment 1): The regular expressions for all tokens need to be defined here.
 
 
 else {return symbol(Sym.ELSE);}
@@ -62,10 +61,16 @@ var {return symbol(Sym.VAR);}
 \{ { return symbol(Sym.LCURL); }
 \} { return symbol(Sym.RCURL); }
 \: { return symbol(Sym.COLON); }
+\, { return symbol(Sym.COMMA); }
 \; { return symbol(Sym.SEMIC); }
 [ \r\t\n] {}
 \/\/.* { }
-[a-zA-Z_][a-zA-Z0-9_]* { return symbol(Sym.IDENT, new Identifer (yytext())) ;}
-[0-9]+ { return symbol(Sym.INTLIT, Integer.parseInt(yytext())) ;}
+//.* { }
+'\\n' { return symbol(Sym.INTLIT, (int)'\n'); }
 
-
+0x[0-9A-Fa-f]+ { return symbol(Sym.INTLIT,Integer.parseInt(yytext().substring(2),16)); }
+[0-9]+ { return symbol(Sym.INTLIT,Integer.parseInt(yytext())); }
+[a-zA-Z][a-zA-Z0-9]* { return symbol(Sym.IDENT,new Identifier(yytext())); }
+'\n' { return symbol(Sym.INTLIT, 10);  }
+'.' { return symbol(Sym.INTLIT, yytext().charAt(1)); }
+[^] { throw SplError.IllegalCharacter(new Position(yyline+1,yycolumn+1),yytext().charAt(0)) ; }
