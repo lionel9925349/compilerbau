@@ -56,6 +56,7 @@ while {return symbol(Sym.WHILE) ;}
 \- {return symbol(Sym.MINUS);}
 \>\= {return symbol(Sym.GE);}
 \= {return symbol(Sym.EQ);}
+\,  {return symbol(Sym.COMMA); }
 \( { return symbol(Sym.LPAREN); }
 \) { return symbol(Sym.RPAREN); }
 \[ { return symbol(Sym.LBRACK); }
@@ -71,7 +72,4 @@ while {return symbol(Sym.WHILE) ;}
 [a-zA-Z_][a-zA-Z0-9_]* { return symbol(Sym.IDENT,new Identifier(yytext())); }
 '\\n' { return symbol(Sym.INTLIT, 10);  }
 '.' { return symbol(Sym.INTLIT, yytext().charAt(1)); }
-
 [^] { throw SplError.IllegalCharacter(new Position(yyline+1,yycolumn+1),yytext().charAt(0)) ; }
-
-

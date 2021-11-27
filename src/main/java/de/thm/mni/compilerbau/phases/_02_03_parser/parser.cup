@@ -51,6 +51,102 @@ terminal Integer INTLIT;      //Integer literals
 
 non terminal Program program;
 
+non terminal  ArrayAccess arrayAccess;
+non terminal  ArrayTypeExpression arrayTypeExpession;
+non terminal  AssignStatement assignStatement;
+non terminal  BinaryExpression binaryExpression;
+non terminal  CallStatement callStatement;
+non terminal  CompoundStatement compoudStatement;
+non terminal  EmptyStatement emptyStatement;
+//expresion
+non terminal  GlobalDeclaration globalDeclaration;
+non terminal  IfStatement ifStatement;
+non terminal  IntLiteral intLiteral;
+non terminal  NamedTypeExpression nameTypeExpression;
+non terminal  NamedVariable  namedVariable;
+//node
+non terminal  ParameterDeclaration  parameterDeclaration;
+//position
+non terminal  ProcedureDeclaration procedureDeclaration;
+//programm
+non terminal  Statement statementList;
+non terminal  TypeDeclaration typeDeclaration;
+non terminal  TypeExpression typeExpression;
+non terminal  Variable variable;
+non terminal  VariableDeclaration variableDeclaration;
+non terminal  VariableExpression variableExpression;
+non terminal  WhileStatement whileStatement;
+
+
+non terminal  Expression expr1 ;
+non terminal  expr2 ;
+non terminal  expr3 ;
+non terminal  expr25;
+non terminal  expression;
+non terminal  deklarationen;
+non terminal  anweisungsliste;
+non terminal  procedurEingabe;
+non terminal  statement;
+non terminal  variableDeclarationList;
+non terminal  assigmentVariable;
+non terminal  argumentList;
+non terminal  argument;
+non terminal  arguments;
+
+
 start with program;
 
-program ::= INTLIT; //TODO (assignment 2 and 3): Just a dummy, needs to be replaced by the actual spl grammar.
+program ::= procedureDeclaration  ;
+
+//lionelTypeDeclaration ::= TYPE IDENT EQ IDENT SEMIC
+//typeExpression : := TYPE IDENT EQ ARRAY LBRACK INLIT
+// 2*2+4
+// 2-2*4+(1+1)
+
+expr1 ::= expr1 PLUS expr2
+        | expr1 MINUS expr2
+        | expr2 ;
+expr2 ::= expr2 STAR expr25
+        | expr2 SLASH expr25
+        | expr25 ;
+expr25 ::= expr3 | MINUS expr3;
+expr3 ::= LPAREN expr1  RPAREN | variable | INTLIT  ;
+
+binaryExpression ::= expr1;
+
+variableDeclaration ::= VAR IDENT COLON typeExpression;
+variable ::= variable LBRACK expr1 RBRACK |IDENT  ;
+
+variableDeclarationList ::= variableDeclaration variableDeclarationList | ;
+
+typeDeclaration ::= TYPE IDENT EQ typeExpression SEMIC ;
+typeExpression ::=  IDENT | ARRAY  LBRACK INTLIT RBRACK OF typeExpression ;
+
+ifStatement ::= IF LPAREN expression RPAREN statement |
+                IF LPAREN expression RPAREN statement ELSE statement ;
+
+statementList ::= statement statementList | ;
+
+statement ::=  assignStatement | callStatement| compoudStatement|SEMIC| ifStatement | whileStatement;
+
+compoudStatement ::= LBRACK statementList RBRACK;
+
+callStatement ::= IDENT LPAREN arguments RPAREN SEMIC ;
+argumentList ::= argument COMMA argumentList |  argument ;
+arguments ::=  argumentList | ;
+argument ::= expr1 ;
+
+
+assignStatement ::= variable EQ expression;
+
+
+expression ::= expr1 EQ expr1| expr1 GT expr1 | expr1 GE expr1 | expr1 LE expr1 | expr1 LT expr1 |  expr1 NE expr1;
+whileStatement ::= WHILE LPAREN expression RPAREN statement ;
+
+procedureDeclaration ::= PROC IDENT LPAREN parameterDeclaration RPAREN LBRACK procedurEingabe RBRACK
+                         |PROC IDENT LPAREN  RPAREN LBRACK procedurEingabe RBRACK;
+
+parameterDeclaration ::= IDENT COLON IDENT | REF IDENT COLON IDENT;
+
+procedurEingabe ::= variableDeclarationList statementList;
+
