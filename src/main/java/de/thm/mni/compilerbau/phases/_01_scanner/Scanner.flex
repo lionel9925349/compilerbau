@@ -21,7 +21,7 @@ import java_cup.runtime.*;
 
 %{
     public CommandLineOptions options = null;
-  
+
     private Symbol symbol(int type) {
       return new Symbol(type, yyline + 1, yycolumn + 1);
     }
@@ -33,7 +33,6 @@ import java_cup.runtime.*;
 
 %%
 
-// TODO (assignment 1): The regular expressions for all tokens need to be defined here.
 
 
 else {return symbol(Sym.ELSE);}
@@ -44,6 +43,7 @@ proc {return symbol(Sym.PROC);}
 array {return symbol(Sym.ARRAY);}
 var {return symbol(Sym.VAR);}
 while {return symbol(Sym.WHILE) ;}
+ref {return symbol(Sym.REF) ;}
 
 \< {return symbol(Sym.LT);}
 \# {return symbol(Sym.NE);}

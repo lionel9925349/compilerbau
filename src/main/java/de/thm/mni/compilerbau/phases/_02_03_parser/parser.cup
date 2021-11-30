@@ -92,11 +92,15 @@ non terminal  assigmentVariable;
 non terminal  argumentList;
 non terminal  argument;
 non terminal  arguments;
+non terminal  parameterDeclarationList;
+non terminal  parameterDeclarations;
+non terminal  globalDeclarationList;
+non terminal  globalDeclarations;
 
 
 start with program;
 
-program ::= procedureDeclaration  ;
+program ::= globalDeclarations;
 
 //lionelTypeDeclaration ::= TYPE IDENT EQ IDENT SEMIC
 //typeExpression : := TYPE IDENT EQ ARRAY LBRACK INLIT
@@ -113,11 +117,17 @@ expr25 ::= expr3 | MINUS expr3;
 expr3 ::= LPAREN expr1  RPAREN | variable | INTLIT  ;
 
 binaryExpression ::= expr1;
+variableExpression ::= expr1;// Fragen
+arrayTypeExpession ::= ARRAY LBRACK INTLIT RBRACK OF typeExpression;
 
-variableDeclaration ::= VAR IDENT COLON typeExpression;
+
+globalDeclarations ::= globalDeclarationList | ;
+globalDeclarationList ::= globalDeclaration  globalDeclarationList | globalDeclaration ;
+globalDeclaration ::= procedureDeclaration | typeDeclaration;
+
+
 variable ::= variable LBRACK expr1 RBRACK |IDENT  ;
 
-variableDeclarationList ::= variableDeclaration variableDeclarationList | ;
 
 typeDeclaration ::= TYPE IDENT EQ typeExpression SEMIC ;
 typeExpression ::=  IDENT | ARRAY  LBRACK INTLIT RBRACK OF typeExpression ;
@@ -129,24 +139,28 @@ statementList ::= statement statementList | ;
 
 statement ::=  assignStatement | callStatement| compoudStatement|SEMIC| ifStatement | whileStatement;
 
-compoudStatement ::= LBRACK statementList RBRACK;
+compoudStatement ::= LCURL statementList RCURL;
 
 callStatement ::= IDENT LPAREN arguments RPAREN SEMIC ;
 argumentList ::= argument COMMA argumentList |  argument ;
 arguments ::=  argumentList | ;
 argument ::= expr1 ;
 
+assignStatement ::= variable ASGN expr1 SEMIC;
 
-assignStatement ::= variable EQ expression;
+expression ::= expr1 EQ expr1| expr1 GT expr1 | expr1 GE expr1 | expr1 LE expr1 | expr1 LT expr1 |  expr1 NE expr1 | expr1 ;
+whileStatement ::= WHILE LPAREN expression RPAREN LCURL statementList RCURL;
 
+procedureDeclaration ::= PROC IDENT LPAREN parameterDeclarations RPAREN LCURL procedurEingabe RCURL;
 
-expression ::= expr1 EQ expr1| expr1 GT expr1 | expr1 GE expr1 | expr1 LE expr1 | expr1 LT expr1 |  expr1 NE expr1;
-whileStatement ::= WHILE LPAREN expression RPAREN statement ;
-
-procedureDeclaration ::= PROC IDENT LPAREN parameterDeclaration RPAREN LBRACK procedurEingabe RBRACK
-                         |PROC IDENT LPAREN  RPAREN LBRACK procedurEingabe RBRACK;
-
-parameterDeclaration ::= IDENT COLON IDENT | REF IDENT COLON IDENT;
+parameterDeclarations ::= parameterDeclarationList | ;
+parameterDeclarationList ::= parameterDeclaration COMMA parameterDeclarationList | parameterDeclaration;
+parameterDeclaration ::= IDENT COLON IDENT | REF IDENT COLON IDENT ;
 
 procedurEingabe ::= variableDeclarationList statementList;
+
+variableDeclarationList ::= variableDeclaration variableDeclarationList | ;
+
+
+variableDeclaration ::= VAR IDENT COLON typeExpression SEMIC;
 
