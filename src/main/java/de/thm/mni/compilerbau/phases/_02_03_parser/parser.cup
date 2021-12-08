@@ -57,27 +57,23 @@ non terminal Program program;
 non terminal  ArrayAccess arrayAccess;
 non terminal  ArrayTypeExpression arrayTypeExpession;
 non terminal  AssignStatement assignStatement;
-non terminal  BinaryExpression binaryExpression;
+non terminal  Expression binaryExpression;
 non terminal  CallStatement callStatement;
 non terminal  CompoundStatement compoudStatement;
-non terminal  EmptyStatement emptyStatement;
-//expresion
 non terminal  GlobalDeclaration globalDeclaration;
 non terminal  IfStatement ifStatement;
-non terminal  IntLiteral intLiteral;
+non terminal  EmptyStatement emptystatement;
+//non terminal  IntLiteral intLiteral;
 non terminal  NamedTypeExpression nameTypeExpression;
 non terminal  NamedVariable  namedVariable;
-//node
 non terminal  ParameterDeclaration  parameterDeclaration;
-//position
 non terminal  ProcedureDeclaration procedureDeclaration;
-//programm
-non terminal  Statement statementList;
+non terminal  List<Statement> statementList;
 non terminal  TypeDeclaration typeDeclaration;
 non terminal  TypeExpression typeExpression;
 non terminal  Variable variable;
 non terminal  VariableDeclaration variableDeclaration;
-non terminal  VariableExpression variableExpression;
+non terminal  Expression variableExpression;
 non terminal  WhileStatement whileStatement;
 
 
@@ -86,18 +82,15 @@ non terminal  Expression expr2 ;
 non terminal  Expression expr3 ;
 non terminal  Expression expr25;
 non terminal  Expression expression;
-non terminal  deklarationen;
-non terminal  procedurEingabe;
-non terminal  statement;
-non terminal  variableDeclarationList;
-non terminal  assigmentVariable;
-non terminal  argumentList;
-non terminal  argument;
-non terminal  arguments;
-non terminal  List<ParameterDeclaration parameterDeclarationList;
-non terminal  parameterDeclarations;
+non terminal  Statement statement;
+non terminal  List<VariableDeclaration> variableDeclarationList;
+non terminal  List<Expression> argumentList;
+non terminal  Expression argument;
+non terminal  List<Expression> arguments;
+non terminal  List<ParameterDeclaration> parameterDeclarationList;
+non terminal  List<ParameterDeclaration> parameterDeclarations;
 non terminal  List<GlobalDeclaration> globalDeclarationList;
-non terminal  GlobalDeclaration globalDeclarations;
+non terminal  List<GlobalDeclaration> globalDeclarations;
 
 
 start with program;
@@ -106,93 +99,95 @@ program ::= globalDeclarations:gd {: RESULT = new Program(new Position(gdleft,gd
 
 
 
-expr1 ::= expr1:lhs PLUS expr2:rhs  {: RESULT = BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.ADD,lhs,rhs); :}
-        | expr1:lhs MINUS expr2:rhs  {: RESULT = BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.SUB,lhs,rhs); :}
+expr1 ::= expr1:lhs PLUS expr2:rhs  {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.ADD,lhs,rhs); :}
+        | expr1:lhs MINUS expr2:rhs  {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.SUB,lhs,rhs); :}
         | expr2:lhs {: RESULT = lhs; :} ;
-expr2 ::= expr2:lhs STAR expr25:rhs {: RESULT = BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.MUL,lhs,rhs); :}
-        | expr2:lhs SLASH expr25:rhs  {: RESULT = BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.DIV,lhs,rhs); :}
-        | expr25:lhs{: RESULT = lhs; :} ;
-expr25 ::= expr3:lhs {: RESULT = lhs; :}
-        | MINUS:min expr3:rhs  {: RESULT = BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.SUB,new IntLiteral(new Position(minleft,minright),0),rhs); :};
-expr3 ::= LPAREN expr1:lhs  RPAREN {: RESULT = lhs; :}
-        | variable: var {: RESULT = var; :}
-        | INTLIT:in {: RESULT = new IntLiteral(new Position(intleft,intright),in); :}; //fragen
+expr2 ::= expr2:lhs STAR expr25:rhs {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.MUL,lhs,rhs); :}
+        | expr2:lhs SLASH expr25:rhs  {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.DIV,lhs,rhs); :}
+        | expr25: ex25 {: RESULT = ex25; :} ;
+expr25 ::= expr3: ex3 {: RESULT = ex3; :}
+        | MINUS:min expr3:rhs  {: RESULT = new BinaryExpression(new Position(rhsleft,rhsright)  ,BinaryExpression.Operator.SUB,new IntLiteral(new Position(minleft,minright),0),rhs); :};
+expr3 ::= LPAREN expr1:ex1  RPAREN {: RESULT = ex1; :}
+        | variable: var {: RESULT = new VariableExpression(new Position(varleft, varright), var) ; :}
+        | INTLIT:in {: RESULT = new IntLiteral(new Position(inleft,inright),in); :}; //fragen
 
 binaryExpression ::= expr1:exp {: RESULT = exp; :};
 
 variableExpression ::= expr1:exp {: RESULT = exp; :};
-arrayTypeExpession ::= ARRAY:pos LBRACK INTLIT:size RBRACK OF typeExpression:typEx {: RESULT = new ArrayTypeExpression (new Position(posleft,posright),typEx,size); :};
-
 
 globalDeclarations ::= globalDeclarationList:gdl {: RESULT = gdl; :}
-                        | {: RESULT = nill(); :} ;
+                        | {: RESULT = nil(); :} ;
+
 globalDeclarationList ::= globalDeclaration:gd  globalDeclarationList:gdl {: RESULT = cons(gd, gdl); :}
                         | globalDeclaration:gd {: RESULT = cons(gd, nil()); :};
 
 globalDeclaration ::= procedureDeclaration:pd {: RESULT = pd; :}
                     | typeDeclaration:typDec {: RESULT = typDec; :} ;
 
+variable ::= arrayAccess:arr {: RESULT = arr; :} | namedVariable:nam {: RESULT = nam; :};
+arrayAccess ::= variable:var LBRACK expr1:ex RBRACK {: RESULT = new ArrayAccess ( new Position(varleft,varright),var, ex); :};
+namedVariable::=IDENT:id {: RESULT = new NamedVariable ( new Position(idleft,idright), id ); :};
 
-//variable ::= variable LBRACK expr1 RBRACK |IDENT  ;
-variable ::= variable:var LBRACK expr1:ex RBRACK {: RESULT = new ArrayAccess ( new Position(varleft,varright),var, ex); :}
-            |IDENT:id {: RESULT = new NamedVariable ( new Position(idleft,idright), id ); :};
+typeDeclaration ::= TYPE IDENT:id EQ typeExpression:typEx SEMIC {: RESULT = new TypeDeclaration(new Position(idleft,idright),id,typEx );:};
 
-typeDeclaration ::= TYPE IDENT:id EQ typeExpression:typEx SEMIC {: RESULT = new TypeDeclaration(new Position(idleft,idright),typEx,id );:};
-typeExpression ::=  IDENT:id {: RESULT = new NamedTypeExpression(new Position(idleft,idright),id); :}
-                    | ARRAY:pos  LBRACK INTLIT:size  RBRACK OF typeExpression:typEX {: RESULT = new ArrayTypeExpression(new Position(posleft,posright),typEx,size); :} ;
+typeExpression ::=  arrayTypeExpession:arrTypEx {: RESULT = arrTypEx; :}| nameTypeExpression:nameTypEx {: RESULT = nameTypEx; :};
+nameTypeExpression::= IDENT:id {: RESULT = new NamedTypeExpression(new Position(idleft,idright),id); :};
+arrayTypeExpession::= ARRAY:pos  LBRACK INTLIT:size  RBRACK OF typeExpression:typEx {: RESULT = new ArrayTypeExpression(new Position(posleft,posright),typEx,size); :} ;
 
-ifStatement ::= IF LPAREN expression:ex RPAREN statement:stat {: RESULT = new IfStatemen(new Position(exleft,exright),ex,stat); :}
-              | IF LPAREN expression:ex RPAREN statement:stat ELSE statement:stat {: RESULT = new IfStatement(new Position(exleft,exright),stat,stat); :} ;
+ifStatement ::= IF LPAREN expression:ex RPAREN statement:stat {: RESULT = new IfStatement(new Position(exleft,exright),ex,stat,null); :}
+//zu fragen statl
+            | IF LPAREN expression:ex RPAREN statement:stat ELSE statement:statl {: RESULT = new IfStatement(new Position(exleft,exright),ex,stat,statl); :} ;
 
-statementList ::= statement:stat statementList:statl {: RESULT = cons(stat, statl); :}| {: RESULT = nil(); :};
+statementList ::= statement:stat statementList:statl {: RESULT = cons(stat, statl); :}
+                | {: RESULT = nil(); :};
 
 statement ::=  assignStatement:assg {: RESULT = assg; :}
                | callStatement:call {: RESULT = call; :}
                | compoudStatement:comp {: RESULT = comp; :}
-               |SEMIC:sem {: RESULT = new EmptyStatement(new Position(semleft,semright)); :}
+               | emptystatement:emp {: RESULT = emp; :}
                | ifStatement:ifs {: RESULT = ifs; :}
                | whileStatement:whis {: RESULT = whis; :};
 
 compoudStatement ::= LCURL statementList:statl RCURL {: RESULT = new CompoundStatement(new Position(statlleft,statlright), statl); :};
-
+emptystatement::= SEMIC:sem {: RESULT = new EmptyStatement(new Position(semleft,semright)); :};
 callStatement ::= IDENT:id LPAREN arguments:args RPAREN SEMIC {: RESULT = new CallStatement(new Position(idleft,idright),id,args); :};
+                //    public CallStatement(Position position, Identifier procedureName, List<Expression> arguments)
+                // est ce qu on doit mettre la liste sur noptre call
 argumentList ::= argument:arg COMMA argumentList:argl {: RESULT = cons(arg, argl); :}
-                |  argument:arg {: RESULT = arg; :} ;
+                |  argument:arg {: RESULT = cons(arg, nil()); :} ;
 
 arguments ::=  argumentList:argL {: RESULT = argL; :}
-            | {: RESULT = nill(); :};
+            | {: RESULT = nil(); :};
 argument ::= expr1:exp {: RESULT = exp; :} ;
 
 assignStatement ::= variable:var ASGN expr1:ex1 SEMIC {: RESULT = new AssignStatement (new Position(varleft,varright),var,ex1); :};
 
 
-expression ::= expr1:lhs EQ expr1:rhs {: RESULT = BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.EQU,lhs,rhs); :}
-            | expr1:lhs GT expr1:rhs    {: RESULT = BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.GRT,lhs,rhs); :}
-            | expr1:lhs  GE expr1: rhs  {: RESULT = BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.GRE,lhs,rhs); :}
-            | expr1:lhs LE expr1:rhs   {: RESULT = BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.LSE,lhs,rhs); :}
-            | expr1:lhs LT expr1:rhs    {: RESULT = BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.LST,lhs,rhs); :}
-            | expr1:lhs NE expr1:rhs  {: RESULT = BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.NEQ,lhs,rhs); :}
+expression ::= expr1:lhs EQ expr1:rhs {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.EQU,lhs,rhs); :}
+            | expr1:lhs GT expr1:rhs    {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.GRT,lhs,rhs); :}
+            | expr1:lhs  GE expr1: rhs  {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.GRE,lhs,rhs); :}
+            | expr1:lhs LE expr1:rhs   {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.LSE,lhs,rhs); :}
+            | expr1:lhs LT expr1:rhs    {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.LST,lhs,rhs); :}
+            | expr1:lhs NE expr1:rhs  {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.NEQ,lhs,rhs); :}
             | expr1:lhs {: RESULT = lhs; :} ;
 
 
-whileStatement ::= WHILE LPAREN expression:exp RPAREN LCURL statementList:stmL RCURL {: RETURN = WhileStatement(new Position(expleft,expright),exp,stmL); :};
+whileStatement ::= WHILE LPAREN expression:exp RPAREN LCURL statement:stmL RCURL {: RESULT = new WhileStatement(new Position(expleft,expright),exp,stmL); :};
 
 procedureDeclaration ::= PROC IDENT:id LPAREN parameterDeclarations:pardec
                      RPAREN LCURL variableDeclarationList:varDec statementList:state RCURL {: RESULT = new ProcedureDeclaration(new Position(pardecleft,pardecright),id, pardec, varDec, state);:};
-
-parameterDeclarations ::= parameterDeclarationList:parDecL {: RESULT = parDecL; :} | {: RESULT = nill(); :};
+//    public ProcedureDeclaration(Position position, Identifier name, List<ParameterDeclaration> parameters, List<VariableDeclaration> variables, List<Statement> body) {
+// est ce que notre proce doit avoir des list coe ca
+parameterDeclarations ::= parameterDeclarationList:parDecL {: RESULT = parDecL; :}
+                        | {: RESULT = nil(); :};
 parameterDeclarationList ::= parameterDeclaration:parDec COMMA parameterDeclarationList:parDecL {: RESULT = cons(parDec, parDecL); :}
-                            | parameterDeclaration:parDec {: RESULT = parDec; :};
+                            | parameterDeclaration:parDec {: RESULT = cons(parDec, nil()); :};
 
-parameterDeclaration ::= IDENT:id COLON typeExpression:typEx {: RESULT = new ParameterDeclaration(new Position(pleft,pright),id,typEx); :}
-                        | REF:ref IDENT COLON typeExpression:typEx {: RESULT = ref,typEx; :};
+parameterDeclaration ::= IDENT:id COLON typeExpression:typEx {: RESULT = new ParameterDeclaration(new Position(idleft,idright),id,typEx,false); :}
+                        | REF:ref IDENT:id COLON typeExpression:typEx {: RESULT = new ParameterDeclaration(new Position(refleft,refright),id,typEx, true); :};//zu fragen
 
-//procedurEingabe ::= variableDeclarationList statementList;
-
-//R
 variableDeclarationList ::= variableDeclaration:varDec variableDeclarationList:varDecL {: RESULT = cons(varDec,varDecL); :}
-                          | {: RESULT = nill(); :} ;
+                          | {: RESULT = nil(); :};
 
-//R
 variableDeclaration ::= VAR:var IDENT:id COLON typeExpression:typEx SEMIC {: RESULT = new VariableDeclaration(new Position(varleft,varright),id,typEx); :};
 
