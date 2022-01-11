@@ -20,6 +20,9 @@ public class ArrayType extends Type {
         this.arraySize = arraySize;
     }
 
+    // new ArrayType( new PrimitiveType(4, "int"), 5) => type a = array[5] of int;
+    // new ArrayType( new ArrayType( new PrimitiveType(4, "int"), 6), 5) => type a = array[5] of array[6] of int;
+
     @Override
     public String toString() {
         return String.format("array [%d] of %s", arraySize, baseType);

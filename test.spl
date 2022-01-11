@@ -1,3 +1,8 @@
+
+type A = int;
+type B = A;
+type C = array[12] of B;
+
 proc aux(ref i: int) {
 var j: int;
 j := i + 1;

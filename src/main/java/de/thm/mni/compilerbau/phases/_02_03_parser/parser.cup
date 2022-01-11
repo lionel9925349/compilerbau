@@ -63,7 +63,6 @@ non terminal  CompoundStatement compoudStatement;
 non terminal  GlobalDeclaration globalDeclaration;
 non terminal  IfStatement ifStatement;
 non terminal  EmptyStatement emptystatement;
-//non terminal  IntLiteral intLiteral;
 non terminal  NamedTypeExpression nameTypeExpression;
 non terminal  NamedVariable  namedVariable;
 non terminal  ParameterDeclaration  parameterDeclaration;
@@ -98,18 +97,24 @@ start with program;
 program ::= globalDeclarations:gd {: RESULT = new Program(new Position(gdleft,gdright),gd); :};
 
 
-
+// m1 := expr1 - expr2
+// m1 := expr1 + expr2 - expr2
+// m1 := expr1 + expr2 - expr2 *
 expr1 ::= expr1:lhs PLUS expr2:rhs  {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.ADD,lhs,rhs); :}
         | expr1:lhs MINUS expr2:rhs  {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.SUB,lhs,rhs); :}
         | expr2:lhs {: RESULT = lhs; :} ;
-expr2 ::= expr2:lhs STAR expr25:rhs {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.MUL,lhs,rhs); :}
-        | expr2:lhs SLASH expr25:rhs  {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.DIV,lhs,rhs); :}
-        | expr25: ex25 {: RESULT = ex25; :} ;
-expr25 ::= expr3: ex3 {: RESULT = ex3; :}
-        | MINUS:min expr3:rhs  {: RESULT = new BinaryExpression(new Position(rhsleft,rhsright)  ,BinaryExpression.Operator.SUB,new IntLiteral(new Position(minleft,minright),0),rhs); :};
+expr2 ::= expr2:lhs STAR expr3:rhs {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.MUL,lhs,rhs); :}
+        | expr2:lhs SLASH expr3:rhs  {: RESULT = new BinaryExpression(new Position(lhsleft,lhsright)  ,BinaryExpression.Operator.DIV,lhs,rhs); :}
+        | expr3: ex3 {: RESULT = ex3; :};
+
+//        | expr25: ex25 {: RESULT = ex25; :} ;
+//expr25 ::= expr3: ex3 {: RESULT = ex3; :}
+        //| MINUS:min expr3:rhs  {: RESULT = new BinaryExpression(new Position(rhsleft,rhsright)  ,BinaryExpression.Operator.SUB,new IntLiteral(new Position(minleft,minright),0),rhs); :};
+
 expr3 ::= LPAREN expr1:ex1  RPAREN {: RESULT = ex1; :}
+        | MINUS:min expr3:rhs  {: RESULT = new BinaryExpression(new Position(rhsleft,rhsright)  ,BinaryExpression.Operator.SUB,new IntLiteral(new Position(minleft,minright),0),rhs); :}
         | variable: var {: RESULT = new VariableExpression(new Position(varleft, varright), var) ; :}
-        | INTLIT:in {: RESULT = new IntLiteral(new Position(inleft,inright),in); :}; //fragen
+        | INTLIT:in {: RESULT = new IntLiteral(new Position(inleft,inright), in); :}; //fragen
 
 binaryExpression ::= expr1:exp {: RESULT = exp; :};
 
@@ -134,7 +139,7 @@ typeExpression ::=  arrayTypeExpession:arrTypEx {: RESULT = arrTypEx; :}| nameTy
 nameTypeExpression::= IDENT:id {: RESULT = new NamedTypeExpression(new Position(idleft,idright),id); :};
 arrayTypeExpession::= ARRAY:pos  LBRACK INTLIT:size  RBRACK OF typeExpression:typEx {: RESULT = new ArrayTypeExpression(new Position(posleft,posright),typEx,size); :} ;
 
-ifStatement ::= IF LPAREN expression:ex RPAREN statement:stat {: RESULT = new IfStatement(new Position(exleft,exright),ex,stat,null); :}
+ifStatement ::= IF LPAREN expression:ex RPAREN statement:stat {: RESULT = new IfStatement(new Position(exleft,exright),ex,stat,new EmptyStatement(new Position(exleft,exright))); :}
 //zu fragen statl
             | IF LPAREN expression:ex RPAREN statement:stat ELSE statement:statl {: RESULT = new IfStatement(new Position(exleft,exright),ex,stat,statl); :} ;
 
@@ -172,12 +177,11 @@ expression ::= expr1:lhs EQ expr1:rhs {: RESULT = new BinaryExpression(new Posit
             | expr1:lhs {: RESULT = lhs; :} ;
 
 
-whileStatement ::= WHILE LPAREN expression:exp RPAREN LCURL statement:stmL RCURL {: RESULT = new WhileStatement(new Position(expleft,expright),exp,stmL); :};
+whileStatement ::= WHILE LPAREN expression:exp RPAREN statement:stmL {: RESULT = new WhileStatement(new Position(expleft,expright),exp,stmL); :};
 
 procedureDeclaration ::= PROC IDENT:id LPAREN parameterDeclarations:pardec
                      RPAREN LCURL variableDeclarationList:varDec statementList:state RCURL {: RESULT = new ProcedureDeclaration(new Position(pardecleft,pardecright),id, pardec, varDec, state);:};
-//    public ProcedureDeclaration(Position position, Identifier name, List<ParameterDeclaration> parameters, List<VariableDeclaration> variables, List<Statement> body) {
-// est ce que notre proce doit avoir des list coe ca
+
 parameterDeclarations ::= parameterDeclarationList:parDecL {: RESULT = parDecL; :}
                         | {: RESULT = nil(); :};
 parameterDeclarationList ::= parameterDeclaration:parDec COMMA parameterDeclarationList:parDecL {: RESULT = cons(parDec, parDecL); :}

@@ -71,5 +71,5 @@ ref {return symbol(Sym.REF) ;}
 [0-9]+ { return symbol(Sym.INTLIT,Integer.parseInt(yytext())); }
 [a-zA-Z_][a-zA-Z0-9_]* { return symbol(Sym.IDENT,new Identifier(yytext())); }
 '\\n' { return symbol(Sym.INTLIT, 10);  }
-'.' { return symbol(Sym.INTLIT, yytext().charAt(1)); }
+'.' { return symbol(Sym.INTLIT, (int)yytext().charAt(1)); }
 [^] { throw SplError.IllegalCharacter(new Position(yyline+1,yycolumn+1),yytext().charAt(0)) ; }

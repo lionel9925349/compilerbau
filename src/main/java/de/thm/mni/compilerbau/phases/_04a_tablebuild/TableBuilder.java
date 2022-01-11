@@ -2,6 +2,7 @@ package de.thm.mni.compilerbau.phases._04a_tablebuild;
 
 import de.thm.mni.compilerbau.absyn.*;
 import de.thm.mni.compilerbau.absyn.visitor.DoNothingVisitor;
+import de.thm.mni.compilerbau.absyn.visitor.Visitor;
 import de.thm.mni.compilerbau.table.*;
 import de.thm.mni.compilerbau.types.ArrayType;
 import de.thm.mni.compilerbau.types.Type;
@@ -27,9 +28,10 @@ public class TableBuilder {
     }
 
     public SymbolTable buildSymbolTable(Program program) {
-        //TODO (assignment 4a): Initialize a symbol table with all predefined symbols and fill it with user-defined symbols
-
-        throw new NotImplemented();
+        SymbolTable table = TableInitializer.initializeGlobalTable();
+        Visitor visitor = new VisiteA(table);
+        program.accept(visitor);
+        return table;
     }
 
     /**
@@ -42,5 +44,52 @@ public class TableBuilder {
     private static void printSymbolTableAtEndOfProcedure(Identifier name, ProcedureEntry entry) {
         System.out.format("Symbol table at end of procedure '%s':\n", name);
         System.out.println(entry.localTable.toString());
+    }
+
+    private class VisiteA extends DoNothingVisitor {
+        SymbolTable upperLevelTable;
+        public VisiteA(SymbolTable upperLevelTable){
+            this.upperLevelTable = upperLevelTable;
+        }
+        @Override
+        public void visit(ParameterDeclaration parameterDeclaration) {
+            System.out.println("param dec visited");
+        }
+
+
+        @Override
+        public void visit(TypeDeclaration typeDeclaration) {
+            // for typedec we use upperLevalTable to insert type
+            System.out.println(" type dec visited");
+
+        }
+
+        @Override
+        public void visit(ProcedureDeclaration procedureDeclaration) {
+            System.out.println("procedure dec visited");
+            SymbolTable procSymTable = new SymbolTable(upperLevelTable);
+            for (ParameterDeclaration pd : procedureDeclaration.parameters) {
+                pd.accept(this);
+            }
+
+            // for procedure we use upperLevalTable to insert proc
+
+        }
+
+        public void visit(VariableDeclaration variableDeclaration) {
+            System.out.println("variable declaration");
+            SymbolTable procSymTable = new SymbolTable(upperLevelTable);
+            VariableDeclaration vd = variableDeclaration;
+            vd.typeExpression.accept(this);
+        }
+
+        @Override
+        public void visit(Program program) {
+            System.out.println("program visited");
+            for (GlobalDeclaration gb: program.declarations) {
+                gb.accept(this);
+            }
+        }
+
     }
 }
