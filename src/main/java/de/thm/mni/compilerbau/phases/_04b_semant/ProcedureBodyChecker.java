@@ -3,6 +3,7 @@ package de.thm.mni.compilerbau.phases._04b_semant;
 import de.thm.mni.compilerbau.absyn.*;
 import de.thm.mni.compilerbau.absyn.visitor.DoNothingVisitor;
 import de.thm.mni.compilerbau.absyn.visitor.Visitor;//
+import de.thm.mni.compilerbau.table.Entry;
 import de.thm.mni.compilerbau.table.ProcedureEntry;//
 import de.thm.mni.compilerbau.table.SymbolTable;
 import de.thm.mni.compilerbau.table.VariableEntry;//
@@ -20,10 +21,15 @@ import de.thm.mni.compilerbau.utils.SplError;
  */
 public class ProcedureBodyChecker {
     public void checkProcedures(Program program, SymbolTable globalTable) {
-        //TODO (assignment 4b): Check all procedure bodies for semantic errors
-        throw new NotImplemented();
+      program.accept(new ProcedureBodyVisitor(globalTable));
     }
     private class ProcedureBodyVisitor extends DoNothingVisitor {
+        SymbolTable symbolTable ;
+
+
+        public ProcedureBodyVisitor (SymbolTable gTable){
+            this.symbolTable = gTable;
+        }
 
         //AssignStatement
         @Override
@@ -36,6 +42,7 @@ public class ProcedureBodyChecker {
                 throw SplError.AssignmentRequiresIntegers(assignStatement.position);
             }
         }
+
         //IfStatement
         @Override
         public void visit(IfStatement ifStatement) {
@@ -63,9 +70,54 @@ public class ProcedureBodyChecker {
         //ProcedureDeclaration
         @Override
         public void visit(ProcedureDeclaration procedureDeclaration) {
+            ProcedureEntry procedureEntry = (ProcedureEntry) this.symbolTable.lookup(procedureDeclaration.name);
+            ProcedureBodyVisitor newVisitor = new ProcedureBodyVisitor(procedureEntry.localTable);
+
+            for (Statement stInBody : procedureDeclaration.body){
+                stInBody.accept(newVisitor);
+            }
+        }
+        //CallStatement
+        @Override
+        public void visit(CallStatement callStatement) {
+            Entry entry = this.symbolTable.lookup(callStatement.procedureName);
+            if (entry == null){
+                throw  SplError.UndefinedProcedure(callStatement.position,callStatement.procedureName);
+            }
+            else if( !(entry instanceof ProcedureEntry) ) {
+                throw  SplError.CallOfNonProcedure(callStatement.position,callStatement.procedureName);
+            }
+            else {
+                ProcedureEntry procedureEntry = (ProcedureEntry)entry;
+                if (callStatement.arguments.size() > procedureEntry.parameterTypes.size()){
+                    throw SplError.TooManyArguments(callStatement.position,callStatement.procedureName);
+                }
+                if (callStatement.arguments.size() < procedureEntry.parameterTypes.size()){
+                    throw SplError.TooFewArguments(callStatement.position,callStatement.procedureName);
+                }
+                for ( int i=0;i < callStatement.arguments.size();i++){
+                    if ( callStatement.arguments.get(i).dataType != procedureEntry.parameterTypes.get(i).type){
+                        throw SplError.ArgumentTypeMismatch(callStatement.position,callStatement.procedureName,i);
+                    }
+                    if ( procedureEntry.parameterTypes.get(i).isReference && !(callStatement.arguments.get(i) instanceof VariableExpression)){
+                        throw SplError.ArgumentMustBeAVariable(callStatement.position,callStatement.procedureName,i);
+                    }
+
+
+                }
+
+            }
+
+
+
+
 
 
         }
+
+
+
+
         //BinaryExpression
         public void visit(BinaryExpression binaryExpression) {
 
