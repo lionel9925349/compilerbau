@@ -108,11 +108,6 @@ public class ProcedureBodyChecker {
 
             }
 
-
-
-
-
-
         }
 
 
@@ -120,6 +115,16 @@ public class ProcedureBodyChecker {
 
         //BinaryExpression
         public void visit(BinaryExpression binaryExpression) {
+            binaryExpression.leftOperand.accept(this);
+            binaryExpression.rightOperand.accept(this);
+            if(!(binaryExpression.leftOperand.dataType == binaryExpression.rightOperand.dataType)){
+                throw SplError.OperatorDifferentTypes(binaryExpression.position);
+            }
+            if(binaryExpression.operator.isArithmetic()){
+                if(((binaryExpression.leftOperand.dataType) != (instanceof  PrimitiveType)) || (binaryExpression.rightOperand.dataType instanceof  PrimitiveType))
+            }
+
+
 
 
         }
