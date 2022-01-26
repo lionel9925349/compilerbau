@@ -109,10 +109,6 @@ public class ProcedureBodyChecker {
             }
 
         }
-
-
-
-
         //BinaryExpression
         public void visit(BinaryExpression binaryExpression) {
             binaryExpression.leftOperand.accept(this);
@@ -120,13 +116,24 @@ public class ProcedureBodyChecker {
             if(!(binaryExpression.leftOperand.dataType == binaryExpression.rightOperand.dataType)){
                 throw SplError.OperatorDifferentTypes(binaryExpression.position);
             }
-            if(binaryExpression.operator.isArithmetic()){
-                if(((binaryExpression.leftOperand.dataType) != (instanceof  PrimitiveType)) || (binaryExpression.rightOperand.dataType instanceof  PrimitiveType))
+            else if(binaryExpression.operator.isArithmetic()){
+                if(!(binaryExpression.leftOperand.dataType instanceof  PrimitiveType)
+                        || !(binaryExpression.rightOperand.dataType instanceof  PrimitiveType)){
+                    throw SplError.OperatorDifferentTypes(binaryExpression.position);
+                }
+                else{
+                    binaryExpression.dataType = PrimitiveType.intType;
+                }
             }
-
-
-
-
+            else if (binaryExpression.operator.isComparison()){
+                if(!(binaryExpression.leftOperand.dataType instanceof  PrimitiveType)
+                        || !(binaryExpression.rightOperand.dataType instanceof  PrimitiveType)){
+                    throw SplError.ComparisonNonInteger(binaryExpression.position);
+                }
+                else{
+                    binaryExpression.dataType = PrimitiveType.boolType;
+                }
+            }
         }
         //CompoundStatement
         @Override
@@ -147,6 +154,31 @@ public class ProcedureBodyChecker {
             variableExpression.dataType = variableExpression.variable.dataType;
 
         }
+        //NamedVariable
+        @Override
+        public void visit (NamedVariable namedVariable){
+           Entry entry = symbolTable.lookup(namedVariable.name,SplError.UndefinedVariable(namedVariable.position,namedVariable.name));
+           if (!(entry instanceof VariableEntry)){
+               throw SplError.NotAVariable(namedVariable.position,namedVariable.name);
+           }
+           VariableEntry variableEntry = (VariableEntry) entry;
+           namedVariable.dataType = variableEntry.type;
+        }
+        //ArrayAccess
+        @Override
+        public void visit (ArrayAccess arrayAccess){
+            arrayAccess.array.accept(this);
+            arrayAccess.index.accept(this);
+            if (!(arrayAccess.array.dataType instanceof ArrayType)){
+                throw SplError.IndexingNonArray(arrayAccess.position);
+            }
+            else if (!(arrayAccess.index.dataType == PrimitiveType.intType)){
+                    throw SplError.IndexingWithNonInteger(arrayAccess.position);
+                }
+            ArrayType baseType = (ArrayType) arrayAccess.array.dataType;
+            arrayAccess.dataType =baseType.baseType;
+        }
+
         //Programm
         @Override
         public void visit(Program program) {
