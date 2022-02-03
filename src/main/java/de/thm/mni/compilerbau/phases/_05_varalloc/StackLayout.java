@@ -18,35 +18,44 @@ public class StackLayout {
      * @return whether the procedure this stack layout describes is a leaf procedure.
      */
     public boolean isLeafProcedure() {
-        //TODO (assignment 5): Think about how to encode the absence of calls and use this to implement this method
-
-        throw new NotImplemented();
+        if (VarAllocator.numberOfCall == 0){
+            return true;
+        }
+        return false;
     }
 
     /**
      * @return The total size of the stack frame described by this object.
      */
     public int frameSize() {
-        //TODO (assignment 5): Calculate the size of the stack frame
 
-        throw new NotImplemented();
+        return outgoingAreaSize + localVarAreaSize + 8 ;
     }
 
     /**
      * @return The offset (starting from the new stack pointer) where the old frame pointer is stored in this stack frame.
      */
     public int oldFramePointerOffset() {
-        //TODO (assignment 5): Calculate the offset of the old frame pointer
+      if (outgoingAreaSize == -1){
+       return 0;
+      }
+      else {
+          return argumentAreaSize + 8;
+      }
 
-        throw new NotImplemented();
     }
 
     /**
      * @return The offset (starting from the new frame pointer) where the old return adress is stored in this stack frame.
      */
     public int oldReturnAddressOffset() {
-        //TODO (assignment 5): Calculate the offset of the old return address
+        if (outgoingAreaSize == -1)
+        {
+            return 0;
+        }
+        else {
+            return -1*(localVarAreaSize + 8);
+        }
 
-        throw new NotImplemented();
     }
 }

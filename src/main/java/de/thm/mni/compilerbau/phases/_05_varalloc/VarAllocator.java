@@ -2,18 +2,13 @@ package de.thm.mni.compilerbau.phases._05_varalloc;
 
 import de.thm.mni.compilerbau.absyn.*;
 import de.thm.mni.compilerbau.absyn.visitor.DoNothingVisitor;
-import de.thm.mni.compilerbau.phases._04b_semant.ProcedureBodyChecker;
 import de.thm.mni.compilerbau.table.ParameterType;
 import de.thm.mni.compilerbau.table.ProcedureEntry;
 import de.thm.mni.compilerbau.table.SymbolTable;
 import de.thm.mni.compilerbau.table.VariableEntry;
-import de.thm.mni.compilerbau.types.PrimitiveType;
 import de.thm.mni.compilerbau.utils.*;
 
-import java.util.AbstractMap;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.IntStream;
 
 /**
@@ -26,6 +21,8 @@ public class VarAllocator {
 
     private final boolean showVarAlloc;
     private final boolean ershovOptimization;
+    private static int mostParam = 0;
+    public static int numberOfCall = 0;
 
     /**
      * @param showVarAlloc       Whether to show the results of the variable allocation after it is finished
@@ -36,6 +33,11 @@ public class VarAllocator {
         this.ershovOptimization = ershovOptimization;
     }
     private static class VarallocatorVisitor extends DoNothingVisitor{
+        private SymbolTable symbolTable;
+
+        public VarallocatorVisitor(SymbolTable symbolTable){
+            this.symbolTable = symbolTable;
+        }
 
         //tous les Overwrite
 
@@ -61,7 +63,11 @@ public class VarAllocator {
         //CallStatement
         @Override
         public void visit(CallStatement callStatement) {
-
+            numberOfCall ++;
+            ProcedureEntry procedureEntry = (ProcedureEntry) symbolTable.lookup(callStatement.procedureName);
+            if ((procedureEntry.parameterTypes.size() * REFERENCE_BYTESIZE) > mostParam){
+                mostParam = procedureEntry.parameterTypes.size() * REFERENCE_BYTESIZE;
+            }
 
         }
         //CompoundStatement
@@ -79,7 +85,20 @@ public class VarAllocator {
             for (Statement stInBody : procedureDeclaration.body){
                 stInBody.accept(this);
             }
+            ProcedureEntry procedureEntry = (ProcedureEntry) symbolTable.lookup(procedureDeclaration.name);
+            if (numberOfCall == 0){
+                procedureEntry.stackLayout.outgoingAreaSize = -1;
+            }
+            else if (mostParam == 0) {
+                procedureEntry.stackLayout.outgoingAreaSize = 0;
+            }
+            else {
+                procedureEntry.stackLayout.outgoingAreaSize = mostParam;
+                mostParam = 0;
+                numberOfCall = 0;
+            }
         }
+
         //Programm
         @Override
         public void visit(Program program) {
@@ -87,21 +106,58 @@ public class VarAllocator {
                 gb.accept(this);
             }
         }
-
-
-
-
-
 }
+
+    private static class VarallocatorVisitor2 extends DoNothingVisitor{
+        private SymbolTable symbolTable;
+        public VarallocatorVisitor2(SymbolTable symbolTable){
+            this.symbolTable = symbolTable;
+        }
+
+        //ProcedureDeclaration
+        @Override
+        public void visit(ProcedureDeclaration procedureDeclaration) {
+        ProcedureEntry procedureEntry = (ProcedureEntry) symbolTable.lookup(procedureDeclaration.name);
+            List<ParameterDeclaration> parDEcList = procedureDeclaration.parameters;
+            List<ParameterType> parTypList = procedureEntry.parameterTypes;
+            int initArgSize = 0;
+            int initVarSize = 0;
+            int temp = 0;
+        for (ParameterDeclaration parameterDeclaration : parDEcList){
+            VariableEntry variableEntry = (VariableEntry) procedureEntry.localTable.lookup(parameterDeclaration.name);
+            variableEntry.offset = initArgSize;
+            parTypList.get(temp).offset = initArgSize;
+            initArgSize += 4;
+
+        }
+        procedureEntry.stackLayout.argumentAreaSize = initArgSize;
+
+         for (VariableDeclaration variableDeclaration : procedureDeclaration.variables) {
+             VariableEntry variableEntry = (VariableEntry) procedureEntry.localTable.lookup(variableDeclaration.name);
+             initVarSize -= variableDeclaration.typeExpression.dataType.byteSize;
+             variableEntry.offset = initVarSize;
+         }
+         procedureEntry.stackLayout.localVarAreaSize = -1*initVarSize;
+
+        }
+
+        public void visit(Program program){
+            for (GlobalDeclaration gb : program.declarations){
+                gb.accept(this);
+            }
+
+        }
+    }
+
+
 
     public void allocVars(Program program, SymbolTable table) {
     // utiliser programm et faire tous les accept
+        program.accept(new VarallocatorVisitor2(table));
 
+        program.accept(new VarallocatorVisitor(table));
 
-        throw new NotImplemented();
-
-        //TODO: Uncomment this when the above exception is removed!
-        //if (showVarAlloc) System.out.println(formatVars(program, table));
+        if (showVarAlloc) formatVars(program, table);
     }
 
 
