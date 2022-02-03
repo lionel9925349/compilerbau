@@ -1,11 +1,13 @@
 package de.thm.mni.compilerbau.phases._05_varalloc;
 
-import de.thm.mni.compilerbau.absyn.ProcedureDeclaration;
-import de.thm.mni.compilerbau.absyn.Program;
+import de.thm.mni.compilerbau.absyn.*;
+import de.thm.mni.compilerbau.absyn.visitor.DoNothingVisitor;
+import de.thm.mni.compilerbau.phases._04b_semant.ProcedureBodyChecker;
 import de.thm.mni.compilerbau.table.ParameterType;
 import de.thm.mni.compilerbau.table.ProcedureEntry;
 import de.thm.mni.compilerbau.table.SymbolTable;
 import de.thm.mni.compilerbau.table.VariableEntry;
+import de.thm.mni.compilerbau.types.PrimitiveType;
 import de.thm.mni.compilerbau.utils.*;
 
 import java.util.AbstractMap;
@@ -33,9 +35,68 @@ public class VarAllocator {
         this.showVarAlloc = showVarAlloc;
         this.ershovOptimization = ershovOptimization;
     }
+    private static class VarallocatorVisitor extends DoNothingVisitor{
+
+        //tous les Overwrite
+
+
+        //IfStatement
+        @Override
+        public void visit(IfStatement ifStatement) {
+            ifStatement.thenPart.accept(this);
+
+            if (ifStatement.elsePart !=null){
+                ifStatement.elsePart.accept(this);
+            }
+
+
+        }
+        //WhileStatement
+        @Override
+        public void visit(WhileStatement whileStatement) {
+            whileStatement.body.accept(this);
+
+
+        }
+        //CallStatement
+        @Override
+        public void visit(CallStatement callStatement) {
+
+
+        }
+        //CompoundStatement
+        @Override
+        public void visit(CompoundStatement compoundStatement) {
+            for (Statement cs : compoundStatement.statements){
+                cs.accept(this);
+            }
+
+        }
+        //ProcedureDeclaration
+        @Override
+        public void visit(ProcedureDeclaration procedureDeclaration) {
+
+            for (Statement stInBody : procedureDeclaration.body){
+                stInBody.accept(this);
+            }
+        }
+        //Programm
+        @Override
+        public void visit(Program program) {
+            for (GlobalDeclaration gb : program.declarations){
+                gb.accept(this);
+            }
+        }
+
+
+
+
+
+}
 
     public void allocVars(Program program, SymbolTable table) {
-        //TODO (assignment 5): Allocate stack slots for all parameters and local variables
+    // utiliser programm et faire tous les accept
+
 
         throw new NotImplemented();
 

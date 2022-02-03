@@ -96,6 +96,7 @@ public class ProcedureBodyChecker {
                     throw SplError.TooFewArguments(callStatement.position,callStatement.procedureName);
                 }
                 for ( int i=0;i < callStatement.arguments.size();i++){
+                    callStatement.arguments.get(i).accept(this);
                     if ( callStatement.arguments.get(i).dataType != procedureEntry.parameterTypes.get(i).type){
                         throw SplError.ArgumentTypeMismatch(callStatement.position,callStatement.procedureName,i);
                     }
@@ -176,7 +177,7 @@ public class ProcedureBodyChecker {
                     throw SplError.IndexingWithNonInteger(arrayAccess.position);
                 }
             ArrayType baseType = (ArrayType) arrayAccess.array.dataType;
-            arrayAccess.dataType =baseType.baseType;
+            arrayAccess.dataType = baseType.baseType;
         }
 
         //Programm

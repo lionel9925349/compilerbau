@@ -1,0 +1,9 @@
+
+type x= int;
+
+proc main() {
+var r: int;
+var s: main;
+var t: hallo;
+
+}
