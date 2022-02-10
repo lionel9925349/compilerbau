@@ -129,6 +129,7 @@ public class VarAllocator {
             parTypList.get(temp).offset = initArgSize;
             initArgSize += 4;
 
+            temp++;
         }
         procedureEntry.stackLayout.argumentAreaSize = initArgSize;
 

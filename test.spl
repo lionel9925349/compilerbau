@@ -1,23 +1,11 @@
-//
-// test2.spl -- Aufgabenblatt 2, Testprogramm b)
-//
+proc main(){
+ var a : int ;
+ a := 2 + 5;
+mul(a,a,a);
 
-
-proc summe(n: int, m: int, ref s: int) {
-  s := n + m;
 }
+proc mul(ref res : int , b : int,c : int){
+ res := b * c; 
+ 
 
-
-proc main() {
-  var x: int;
-  var y: int;
-  var s: int;
-
-  //readi(x);
-  x := 3;
-  //readi(y);
-  y := 5;
-  summe(x, y, s);
-  printi(s);
-  printc('\n');
 }

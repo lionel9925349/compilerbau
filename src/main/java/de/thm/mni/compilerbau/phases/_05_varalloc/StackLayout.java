@@ -12,24 +12,33 @@ public class StackLayout {
     public Integer localVarAreaSize = null;
     public Integer outgoingAreaSize = null;
 
+
     /**
      * A leaf procedure is a procedure that does not call any other procedure in its body.
      *
      * @return whether the procedure this stack layout describes is a leaf procedure.
      */
     public boolean isLeafProcedure() {
-        if (VarAllocator.numberOfCall == 0){
+        if (outgoingAreaSize == -1){
             return true;
         }
         return false;
+
     }
 
     /**
      * @return The total size of the stack frame described by this object.
      */
     public int frameSize() {
+        if (outgoingAreaSize == -1)
+        {
+            return 4;
+        }
+        else {
+            return outgoingAreaSize + localVarAreaSize + 8 ;
+        }
 
-        return outgoingAreaSize + localVarAreaSize + 8 ;
+
     }
 
     /**
@@ -40,7 +49,7 @@ public class StackLayout {
        return 0;
       }
       else {
-          return argumentAreaSize + 8;
+          return outgoingAreaSize + 4;
       }
 
     }
