@@ -11,6 +11,7 @@ import de.thm.mni.compilerbau.types.ArrayType;
 import de.thm.mni.compilerbau.utils.NotImplemented;
 import de.thm.mni.compilerbau.utils.SplError;
 
+import java.awt.desktop.OpenURIEvent;
 import java.io.PrintWriter;
 import java.util.List;
 
@@ -21,6 +22,14 @@ import java.util.List;
 public class CodeGenerator {
     private final CodePrinter output;
     private final boolean ershovOptimization;
+    private final static int OLD_FRAME_POINTER = 4;
+    private final static int REFERENCE_BYTESIZE = 4;
+    private final static int OLD_RETURN_ADRESSSIZE = 4;
+    private final  Register nullRegister = new Register(0);
+    private Register temporaryRegister = new Register(8);
+    private final  Register fp = new Register(25);
+    private final  Register sp = new Register(29);
+    private final  Register returnPointer = new Register(31);
 
     /**
      * Initializes the code generator.
@@ -31,6 +40,16 @@ public class CodeGenerator {
     public CodeGenerator(PrintWriter output, boolean ershovOptimization) {
         this.output = new CodePrinter(output);
         this.ershovOptimization = ershovOptimization;
+    }
+    private Register lastFreeRegister(){
+        if (temporaryRegister.isFreeUse()){
+            Register varTempReg = temporaryRegister;
+            temporaryRegister = varTempReg.next();
+            return varTempReg;
+        }
+        else {
+            throw SplError.RegisterOverflow();
+        }
     }
 
     /**
@@ -72,6 +91,7 @@ public class CodeGenerator {
         //IntLiteral
         @Override
         public void visit(IntLiteral intLiteral){
+            output.emitInstruction("add",lastFreeRegister(),nullRegister,intLiteral.value);
         }
 
         //BinaryExpression
@@ -79,11 +99,28 @@ public class CodeGenerator {
         public void visit(BinaryExpression binaryExpression){
             binaryExpression.leftOperand.accept(this);
             binaryExpression.rightOperand.accept(this);
+
+            switch (binaryExpression.operator){
+                case ADD:
+                    output.emitInstruction("add",temporaryRegister.previous().previous(),temporaryRegister.previous().previous(),temporaryRegister.previous());
+                    temporaryRegister = temporaryRegister.previous();
+                    break;
+                case SUB:
+                    output.emitInstruction("sub",temporaryRegister.previous().previous(),temporaryRegister.previous().previous(),temporaryRegister.previous().previous());
+                    temporaryRegister = temporaryRegister.previous();
+                    break;
+            }
+
+
         }
         //NamedVariable
         @Override
         public void visit(NamedVariable namedVariable){
             VariableEntry variableEntry = (VariableEntry) localTable.lookup(namedVariable.name);
+            output.emitInstruction("add",lastFreeRegister(),sp,variableEntry.offset);
+            if (variableEntry.isReference){
+                output.emitInstruction("ldw",temporaryRegister.previous(),temporaryRegister.previous(),0);
+            }
         }
         //VariableExpression
         @Override
@@ -96,6 +133,7 @@ public class CodeGenerator {
         public void visit(AssignStatement assignStatement){
             assignStatement.value.accept(this);
             assignStatement.target.accept(this);
+            output.emitInstruction("stw",temporaryRegister.previous(),temporaryRegister.previous().previous(),0);
 
         }
         //ArrayAccess
@@ -103,6 +141,14 @@ public class CodeGenerator {
         public void visit(ArrayAccess arrayAccess){
              arrayAccess.array.accept(this);
              arrayAccess.index.accept(this);
+             ArrayType arrayType = (ArrayType) arrayAccess.array.dataType;
+             output.emitInstruction("add",lastFreeRegister(),nullRegister,arrayType.arraySize);
+             output.emitInstruction("bgeu",temporaryRegister.previous().previous(),temporaryRegister.previous(),"_indexError");
+             output.emitInstruction("mul",temporaryRegister.previous(),temporaryRegister.previous(),arrayType.baseType.byteSize);
+             temporaryRegister = temporaryRegister.previous();
+             output.emitInstruction("add",temporaryRegister.previous(),temporaryRegister.previous(),temporaryRegister.previous().previous());
+             temporaryRegister = temporaryRegister.previous();
+
 
         }
         //WhileStatement
@@ -132,10 +178,38 @@ public class CodeGenerator {
         @Override
         public void visit(ProcedureDeclaration procedureDeclaration){
             ProcedureEntry procedureEntry = (ProcedureEntry) this.symbolTable.lookup(procedureDeclaration.name);
+            int returnAdresse;
+            int frameSize ;
+            int oldFramePointer;
+            output.emit("\t.export   "+ procedureDeclaration.name.toString());
+            output.emitLabel(procedureDeclaration.name.toString());
+            returnAdresse = procedureEntry.stackLayout.oldReturnAddressOffset();
 
+            if (procedureEntry.stackLayout.outgoingAreaSize == -1){
+                frameSize = procedureEntry.stackLayout.frameSize();
+                oldFramePointer = 0;
+            }
+            else {
+                frameSize = procedureEntry.stackLayout.frameSize();
+                oldFramePointer = procedureEntry.stackLayout.oldFramePointerOffset();
+            }
+            output.emitInstruction("sub",fp,fp,frameSize,"allocate frame");
+            output.emitInstruction("stw",sp,fp,oldFramePointer,"save old frame Pointer");
+            output.emitInstruction("add",sp,fp,frameSize,"setup new frame pointer");
+
+            if (procedureEntry.stackLayout.outgoingAreaSize != -1){
+                output.emitInstruction("stw",returnPointer,sp,returnAdresse,"save return register");
+            }
             for (Statement stInBody : procedureDeclaration.body){
                 stInBody.accept(this);
             }
+            if (procedureEntry.stackLayout.outgoingAreaSize != -1){
+                output.emitInstruction("ldw",returnPointer,sp,returnAdresse,"restore return register");
+            }
+            output.emitInstruction("ldw",sp,fp,oldFramePointer,"restore old frame pointer");
+            output.emitInstruction("add",fp,fp,frameSize,"release frame");
+            output.emitInstruction("jr",returnPointer,"return");
+
         }
         //CompoundStatement
         @Override

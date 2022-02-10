@@ -1,11 +1,18 @@
-proc main(){
- var a : int ;
- a := 2 + 5;
-mul(a,a,a);
+//
+// test3.spl -- Aufgabenblatt 2, Testprogramm c)
+//
 
-}
-proc mul(ref res : int , b : int,c : int){
- res := b * c; 
- 
+
+type A = array [10] of array[2] of int;
+
+proc main() {
+  var a: A;
+  var i: int;
+  i := 0;
+
+  a[i][1]:= 0;
+  i := i + 1;
+  a[i][2] := 2;
+
 
 }
