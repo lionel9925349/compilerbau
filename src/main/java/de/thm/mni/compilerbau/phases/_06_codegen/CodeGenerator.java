@@ -2,15 +2,12 @@ package de.thm.mni.compilerbau.phases._06_codegen;
 
 import de.thm.mni.compilerbau.absyn.*;
 import de.thm.mni.compilerbau.absyn.visitor.DoNothingVisitor;
-import de.thm.mni.compilerbau.phases._02_03_parser.Sym;
-import de.thm.mni.compilerbau.phases._04b_semant.ProcedureBodyChecker;
+import de.thm.mni.compilerbau.table.ParameterType;
 import de.thm.mni.compilerbau.table.ProcedureEntry;
 import de.thm.mni.compilerbau.table.SymbolTable;
 import de.thm.mni.compilerbau.table.VariableEntry;
 import de.thm.mni.compilerbau.types.ArrayType;
-import de.thm.mni.compilerbau.utils.NotImplemented;
 import de.thm.mni.compilerbau.utils.SplError;
-
 import java.awt.desktop.OpenURIEvent;
 import java.io.PrintWriter;
 import java.util.List;
@@ -22,9 +19,6 @@ import java.util.List;
 public class CodeGenerator {
     private final CodePrinter output;
     private final boolean ershovOptimization;
-    private final static int OLD_FRAME_POINTER = 4;
-    private final static int REFERENCE_BYTESIZE = 4;
-    private final static int OLD_RETURN_ADRESSSIZE = 4;
     private final  Register nullRegister = new Register(0);
     private Register temporaryRegister = new Register(8);
     private final  Register fp = new Register(25);
@@ -75,6 +69,7 @@ public class CodeGenerator {
 
     public void generateCode(Program program, SymbolTable table) {
         assemblerProlog();
+        program.accept(new VisitorOfCodeGenerator(table));
 
         //TODO (assignment 6): generate eco32 assembler code for the spl program
 
@@ -94,7 +89,7 @@ public class CodeGenerator {
             output.emitInstruction("add",lastFreeRegister(),nullRegister,intLiteral.value);
         }
 
-        //BinaryExpression
+        //BinaryExpression   !!!!!!!!!!!!!!!!!!!!!!!   ?????????????????
         @Override
         public void visit(BinaryExpression binaryExpression){
             binaryExpression.leftOperand.accept(this);
@@ -106,10 +101,47 @@ public class CodeGenerator {
                     temporaryRegister = temporaryRegister.previous();
                     break;
                 case SUB:
-                    output.emitInstruction("sub",temporaryRegister.previous().previous(),temporaryRegister.previous().previous(),temporaryRegister.previous().previous());
+                    output.emitInstruction("sub",temporaryRegister.previous().previous(),temporaryRegister.previous().previous(),temporaryRegister.previous());
+                    temporaryRegister = temporaryRegister.previous();
+                    break;
+                case MUL:
+                    output.emitInstruction("mul",temporaryRegister.previous().previous(),temporaryRegister.previous().previous(),temporaryRegister.previous());
+                    temporaryRegister = temporaryRegister.previous();
+                    break;
+                case DIV:
+                    output.emitInstruction("div",temporaryRegister.previous().previous(),temporaryRegister.previous().previous(),temporaryRegister.previous());
+                    temporaryRegister = temporaryRegister.previous();
+                    break;
+
+
+                    // ?????????????????????????????????????????
+                case NEQ:
+                    output.emitInstruction("beq",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
+                    temporaryRegister = temporaryRegister.previous();
+                    break;
+                case EQU:
+                    output.emitInstruction("bne",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
+                    temporaryRegister = temporaryRegister.previous();
+                    break;
+                case LSE:
+                    output.emitInstruction("bgt",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
+                    temporaryRegister = temporaryRegister.previous();
+                    break;
+                case LST:
+                    output.emitInstruction("bge",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
+                    temporaryRegister = temporaryRegister.previous();
+                    break;
+                case GRE:
+                    output.emitInstruction("blt",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
+                    temporaryRegister = temporaryRegister.previous();
+                    break;
+                case GRT:
+                    output.emitInstruction("ble",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
                     temporaryRegister = temporaryRegister.previous();
                     break;
             }
+
+
 
 
         }
@@ -126,6 +158,7 @@ public class CodeGenerator {
         @Override
         public void visit(VariableExpression variableExpression){
             variableExpression.variable.accept(this);
+            output.emitInstruction("ldw",temporaryRegister.previous(),temporaryRegister.previous(),0);
 
         }
         //AssignStatement
@@ -134,6 +167,8 @@ public class CodeGenerator {
             assignStatement.value.accept(this);
             assignStatement.target.accept(this);
             output.emitInstruction("stw",temporaryRegister.previous(),temporaryRegister.previous().previous(),0);
+            temporaryRegister = temporaryRegister.previous();
+            temporaryRegister = temporaryRegister.previous();
 
         }
         //ArrayAccess
@@ -151,7 +186,7 @@ public class CodeGenerator {
 
 
         }
-        //WhileStatement
+        //WhileStatement  ??????????????????????????????
         @Override
         public void visit(WhileStatement whileStatement){
             whileStatement.body.accept(this);
@@ -159,7 +194,7 @@ public class CodeGenerator {
 
         }
 
-        //IfStatement
+        //IfStatement   ??????????????????????????????
         @Override
         public void visit(IfStatement ifStatement){
             ifStatement.condition.accept(this);
@@ -172,7 +207,20 @@ public class CodeGenerator {
         public void visit(CallStatement callStatement){
             ProcedureEntry procedureEntry = (ProcedureEntry) symbolTable.lookup(callStatement.procedureName);
             List<Expression> argumentList = callStatement.arguments;
-
+            List<ParameterType> parameterTypeList = procedureEntry.parameterTypes;
+            for(int i = 0; i < argumentList.size();i++){
+                if (parameterTypeList.get(i).isReference){
+                    VariableExpression variableExpression = (VariableExpression) argumentList.get(i);
+                    variableExpression.variable.accept(this);
+                }
+                else {
+                    argumentList.get(i).accept(this);
+                }
+                output.emitInstruction("stw",temporaryRegister.previous(),fp,i * 4,
+                        "store argument #" + i);
+                temporaryRegister = temporaryRegister.previous();
+            }
+            output.emitInstruction("jal",callStatement.procedureName.toString());
         }
         //ProcedureDeclaration
         @Override
@@ -221,7 +269,9 @@ public class CodeGenerator {
         // Program
         @Override
         public void visit(Program program){
-            //????
+            for (GlobalDeclaration gb : program.declarations){
+                gb.accept(this);
+            }
         }
 
 

@@ -1,18 +1,37 @@
 //
-// test3.spl -- Aufgabenblatt 2, Testprogramm c)
+// test4.spl -- Aufgabenblatt 2, Testprogramm d)
 //
 
 
-type A = array [10] of array[2] of int;
+proc fak1(n: int, ref m: int) {
+  m := 1;
+  while (n # 0) {
+    m := m * n;
+    n := n - 1;
+  }
+}
+
+
+proc fak2(n: int, ref m: int) {
+  if (n = 0) {
+    m := 1;
+  } else {
+    fak2(n - 1, m);
+    m := n * m;
+  }
+}
+
 
 proc main() {
-  var a: A;
-  var i: int;
-  i := 0;
+  var n: int;
+  var m: int;
 
-  a[i][1]:= 0;
-  i := i + 1;
-  a[i][2] := 2;
-
-
+  //readi(n);
+  n := 10;
+  fak1(n, m);
+  printi(m);
+  printc('\n');
+  fak2(n, m);
+  printi(m);
+  printc('\n');
 }
