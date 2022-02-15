@@ -2,6 +2,7 @@ package de.thm.mni.compilerbau.phases._06_codegen;
 
 import de.thm.mni.compilerbau.absyn.*;
 import de.thm.mni.compilerbau.absyn.visitor.DoNothingVisitor;
+import de.thm.mni.compilerbau.phases._04b_semant.ProcedureBodyChecker;
 import de.thm.mni.compilerbau.table.ParameterType;
 import de.thm.mni.compilerbau.table.ProcedureEntry;
 import de.thm.mni.compilerbau.table.SymbolTable;
@@ -24,6 +25,9 @@ public class CodeGenerator {
     private final  Register fp = new Register(25);
     private final  Register sp = new Register(29);
     private final  Register returnPointer = new Register(31);
+    private static  int labelZaeler;
+
+
 
     /**
      * Initializes the code generator.
@@ -76,13 +80,14 @@ public class CodeGenerator {
 
     }
     private class VisitorOfCodeGenerator extends DoNothingVisitor{
-        SymbolTable symbolTable;
-        SymbolTable localTable ;
+        SymbolTable symbolTable ;
 
         public VisitorOfCodeGenerator(SymbolTable symbolTable){
             this.symbolTable = symbolTable;
 
         }
+
+
         //IntLiteral
         @Override
         public void visit(IntLiteral intLiteral){
@@ -113,30 +118,34 @@ public class CodeGenerator {
                     temporaryRegister = temporaryRegister.previous();
                     break;
 
-
-                    // ?????????????????????????????????????????
                 case NEQ:
-                    output.emitInstruction("beq",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
+                    output.emitInstruction("beq",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L"+labelZaeler);
+                    temporaryRegister = temporaryRegister.previous();
                     temporaryRegister = temporaryRegister.previous();
                     break;
                 case EQU:
-                    output.emitInstruction("bne",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
+                    output.emitInstruction("bne",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L"+labelZaeler);
+                    temporaryRegister = temporaryRegister.previous();
                     temporaryRegister = temporaryRegister.previous();
                     break;
                 case LSE:
-                    output.emitInstruction("bgt",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
+                    output.emitInstruction("bgt",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L"+labelZaeler);
+                    temporaryRegister = temporaryRegister.previous();
                     temporaryRegister = temporaryRegister.previous();
                     break;
                 case LST:
-                    output.emitInstruction("bge",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
+                    output.emitInstruction("bge",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L"+labelZaeler);
+                    temporaryRegister = temporaryRegister.previous();
                     temporaryRegister = temporaryRegister.previous();
                     break;
                 case GRE:
-                    output.emitInstruction("blt",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
+                    output.emitInstruction("blt",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L"+labelZaeler);
+                    temporaryRegister = temporaryRegister.previous();
                     temporaryRegister = temporaryRegister.previous();
                     break;
                 case GRT:
-                    output.emitInstruction("ble",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L");
+                    output.emitInstruction("ble",temporaryRegister.previous().previous(),temporaryRegister.previous(),"L"+labelZaeler);
+                    temporaryRegister = temporaryRegister.previous();
                     temporaryRegister = temporaryRegister.previous();
                     break;
             }
@@ -148,7 +157,7 @@ public class CodeGenerator {
         //NamedVariable
         @Override
         public void visit(NamedVariable namedVariable){
-            VariableEntry variableEntry = (VariableEntry) localTable.lookup(namedVariable.name);
+            VariableEntry variableEntry = (VariableEntry) symbolTable.lookup(namedVariable.name);
             output.emitInstruction("add",lastFreeRegister(),sp,variableEntry.offset);
             if (variableEntry.isReference){
                 output.emitInstruction("ldw",temporaryRegister.previous(),temporaryRegister.previous(),0);
@@ -170,6 +179,7 @@ public class CodeGenerator {
             temporaryRegister = temporaryRegister.previous();
             temporaryRegister = temporaryRegister.previous();
 
+
         }
         //ArrayAccess
         @Override
@@ -189,18 +199,27 @@ public class CodeGenerator {
         //WhileStatement  ??????????????????????????????
         @Override
         public void visit(WhileStatement whileStatement){
-            whileStatement.body.accept(this);
+            int ersteLabel = labelZaeler;
+            output.emitLabel("L"+labelZaeler);
+            labelZaeler++;
             whileStatement.condition.accept(this);
-
+            whileStatement.body.accept(this);
+            output.emitInstruction("j","L"+ersteLabel);
+            output.emitLabel("L"+(ersteLabel+1));
         }
 
         //IfStatement   ??????????????????????????????
         @Override
         public void visit(IfStatement ifStatement){
+
             ifStatement.condition.accept(this);
             ifStatement.thenPart.accept(this);
+            output.emitInstruction("J","L"+labelZaeler);
+            output.emitLabel("L" + (labelZaeler-1));
+            labelZaeler++;
             ifStatement.elsePart.accept(this);
-
+            output.emitLabel("L" + (labelZaeler-1));
+            labelZaeler++;
         }
         //CallStatement
         @Override
@@ -249,7 +268,8 @@ public class CodeGenerator {
                 output.emitInstruction("stw",returnPointer,sp,returnAdresse,"save return register");
             }
             for (Statement stInBody : procedureDeclaration.body){
-                stInBody.accept(this);
+                CodeGenerator.VisitorOfCodeGenerator newproc = new CodeGenerator.VisitorOfCodeGenerator(procedureEntry.localTable);
+                stInBody.accept(newproc);
             }
             if (procedureEntry.stackLayout.outgoingAreaSize != -1){
                 output.emitInstruction("ldw",returnPointer,sp,returnAdresse,"restore return register");
