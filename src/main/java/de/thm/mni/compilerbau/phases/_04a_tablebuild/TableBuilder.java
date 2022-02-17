@@ -70,7 +70,7 @@ public class TableBuilder {
                 }
             }
             Entry varEntry = new VariableEntry(parameterDeclaration.typeExpression.dataType, parameterDeclaration.isReference);
-            System.out.println("param dec visited");
+
             upperLevelTable.enter(parameterDeclaration.name,varEntry,SplError.RedeclarationAsParameter(parameterDeclaration.position,parameterDeclaration.name));
         }
 
@@ -78,7 +78,7 @@ public class TableBuilder {
         @Override
         public void visit(TypeDeclaration typeDeclaration) {
             typeDeclaration.typeExpression.accept(this);
-            System.out.println(" type dec visited");
+
             Entry entry = new TypeEntry(typeDeclaration.typeExpression.dataType);
             upperLevelTable.enter(typeDeclaration.name,entry,SplError.RedeclarationAsType(typeDeclaration.position,typeDeclaration.name));
 
@@ -107,7 +107,7 @@ public class TableBuilder {
 
         @Override
         public void visit(ProcedureDeclaration procedureDeclaration) {
-            System.out.println("procedure dec visited");
+
             if(procedureDeclaration.name.toString().equals("main")){
                 if(!(procedureDeclaration.parameters).isEmpty()){
                     throw SplError.MainMustNotHaveParameters();
@@ -138,7 +138,7 @@ public class TableBuilder {
         }
 
         public void visit(VariableDeclaration variableDeclaration) {
-            System.out.println("variable declaration");
+
             variableDeclaration.typeExpression.accept(this);
             Entry varEntry = new VariableEntry(variableDeclaration.typeExpression.dataType,false);
             upperLevelTable.enter(variableDeclaration.name,varEntry,SplError.RedeclarationAsVariable(variableDeclaration.position,variableDeclaration.name));
@@ -146,7 +146,7 @@ public class TableBuilder {
 
         @Override
         public void visit(Program program) {
-            System.out.println("program visited");
+
             for (GlobalDeclaration gb: program.declarations) {
                 gb.accept(this);
             }

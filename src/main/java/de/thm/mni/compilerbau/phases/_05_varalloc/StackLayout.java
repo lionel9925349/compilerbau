@@ -32,7 +32,7 @@ public class StackLayout {
     public int frameSize() {
         if (outgoingAreaSize == -1)
         {
-            return 4;
+            return 4 + localVarAreaSize;
         }
         else {
             return outgoingAreaSize + localVarAreaSize + 8 ;
@@ -45,12 +45,12 @@ public class StackLayout {
      * @return The offset (starting from the new stack pointer) where the old frame pointer is stored in this stack frame.
      */
     public int oldFramePointerOffset() {
-      if (outgoingAreaSize == -1){
-       return 0;
-      }
-      else {
-          return outgoingAreaSize + 4;
-      }
+        if (outgoingAreaSize == -1){
+            return 0;
+        }
+        else {
+            return outgoingAreaSize + 4;
+        }
 
     }
 
